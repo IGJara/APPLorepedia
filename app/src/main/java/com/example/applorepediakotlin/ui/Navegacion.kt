@@ -1,7 +1,6 @@
 package com.example.applorepediakotlin.ui
 
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -9,37 +8,45 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 
-
-
-// Rutas de navegación
+// Rutas de Navegación
 sealed class Screen(val route: String) {
-    data object Lista : Screen("lista")
-    data object Detalle : Screen("detalle/{personajeId}") {
-        fun createRoute(personajeId: Int) = "detalle/$personajeId"
+    object Home : Screen("home_screen")
+    object ListaPersonajes : Screen("personaje_list_screen")
+    object DetallePersonaje : Screen("personaje_detail_screen/{personajeId}") {
+        fun createRoute(personajeId: Int) = "personaje_detail_screen/$personajeId"
     }
 }
 
 @Composable
-fun AppNavigation(viewModel: PersonajeViewModel = viewModel()) {
-    val navController = rememberNavController()
+fun AppNavigation(viewModel: PersonajeViewModel) {
+    val navController = rememberNavController() // Controlador de navegación
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Lista.route
+        startDestination = Screen.Home.route // Empieza en la nueva pantalla Home
     ) {
-        // Pantalla de Lista
-        composable(Screen.Lista.route) {
-            PersonajeListScreen(
-                viewModel = viewModel,
-                onPersonajeClick = { personajeId ->
-                    navController.navigate(Screen.Detalle.createRoute(personajeId))
+        // --- 1. HOME SCREEN ---
+        composable(Screen.Home.route) {
+            HomeScreen(
+                onNavigateToLista = {
+                    navController.navigate(Screen.ListaPersonajes.route)
                 }
             )
         }
 
-        // Pantalla de Detalle
+        // --- 2. LISTA DE PERSONAJES ---
+        composable(Screen.ListaPersonajes.route) {
+            PersonajeListScreen(
+                viewModel = viewModel,
+                onPersonajeClick = { personajeId ->
+                    navController.navigate(Screen.DetallePersonaje.createRoute(personajeId))
+                }
+            )
+        }
+
+        // --- 3. DETALLE DEL PERSONAJE ---
         composable(
-            route = Screen.Detalle.route,
+            route = Screen.DetallePersonaje.route,
             arguments = listOf(navArgument("personajeId") { type = NavType.IntType })
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getInt("personajeId") ?: 0

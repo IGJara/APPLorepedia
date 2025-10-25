@@ -22,29 +22,16 @@ private val LightColorScheme = lightColorScheme(
     secondary = PurpleGrey40,
     tertiary = Pink40
 
-    /* Otros colores predeterminados para el tema claro...
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    /* Otros colores predeterminados para el tema claro... */
 )
 
 @Composable
 fun AppLopediaKotlinTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Deshabilitamos el tema dinámico por simplicidad si no se usa Android 12+
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        // if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) -> {
-        //    val context = LocalContext.current
-        //    if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        // }
         darkTheme -> DarkColorScheme
         else -> LightColorScheme
     }
@@ -59,7 +46,7 @@ fun AppLopediaKotlinTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography, // Usamos la tipografía definida en Type.kt
+        typography = Typography, // Esta variable ya está importada
         content = content
     )
 }
