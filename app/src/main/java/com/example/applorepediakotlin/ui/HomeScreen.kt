@@ -4,7 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Edit // Importación necesaria para el nuevo botón
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -13,29 +13,30 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource // ¡IMPORTANTE: Importación para obtener el nombre de la app!
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.applorepediakotlin.R
+import com.example.applorepediakotlin.R // Necesario para acceder a recursos como R.string.app_name y R.drawable.lorepedia_icon
 import com.example.applorepediakotlin.ui.theme.AppLopediaKotlinTheme
 import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// Se actualiza la firma de la función con el nuevo destino de navegación
 fun HomeScreen(
     viewModel: PersonajeViewModel,
     onNavigateToLista: () -> Unit,
-    onNavigateToEvaluacion: () -> Unit // Nuevo parámetro para navegar a la evaluación
+    onNavigateToEvaluacion: () -> Unit
 ) {
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("AppLopedia Wiki") },
+                // Carga el nombre de la aplicación de strings.xml
+                title = { Text(stringResource(R.string.app_name)) },
                 actions = {
-                    // Botón de Modo Oscuro/Claro
                     IconButton(onClick = { viewModel.toggleDarkTheme() }) {
                         Icon(
                             imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
@@ -52,19 +53,19 @@ fun HomeScreen(
                 .padding(padding)
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center // Centra el contenido verticalmente
+            verticalArrangement = Arrangement.Center
         ) {
+            // Carga tu icono principal usando el nombre del archivo PNG que añadiste a 'drawable'
             Image(
-                // Asegúrate de que R.drawable.ic_launcher_foreground existe en tu proyecto
-                painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "Logo de la Wiki",
+                painter = painterResource(id = R.drawable.lorepedia_icon),
+                contentDescription = "Logo de Lorepedia",
                 modifier = Modifier.size(150.dp)
             )
 
             Spacer(Modifier.height(32.dp))
 
             Text(
-                text = "Bienvenido a AppLopedia",
+                text = "Bienvenido a Lorepedia",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -72,17 +73,15 @@ fun HomeScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // Texto descriptivo mejorado
             Text(
                 text = "Descubre a tus personajes favoritos de videojuegos con información detallada y la opción de personalizar sus imágenes.",
                 style = MaterialTheme.typography.bodyLarge,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
 
             Spacer(Modifier.height(48.dp))
 
-            // Botón principal para la lista de personajes
             Button(
                 onClick = onNavigateToLista,
                 modifier = Modifier
@@ -94,9 +93,8 @@ fun HomeScreen(
 
             Spacer(Modifier.height(16.dp))
 
-            // --- NUEVO BOTÓN DE EVALUACIÓN ---
             OutlinedButton(
-                onClick = onNavigateToEvaluacion, // Llama a la nueva función de navegación
+                onClick = onNavigateToEvaluacion,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp)
@@ -105,8 +103,6 @@ fun HomeScreen(
                 Spacer(Modifier.width(8.dp))
                 Text("Evaluar la Aplicación", style = MaterialTheme.typography.titleMedium)
             }
-            // ---------------------------------
-
         }
     }
 }
@@ -115,7 +111,7 @@ fun HomeScreen(
 @Composable
 fun HomeScreenPreview() {
     AppLopediaKotlinTheme {
-        // Se debe actualizar el Preview con el nuevo argumento
+        // Se usa PersonajeViewModel ficticio para el preview
         HomeScreen(viewModel = PersonajeViewModel(), onNavigateToLista = {}, onNavigateToEvaluacion = {})
     }
 }

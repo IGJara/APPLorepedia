@@ -1,49 +1,49 @@
 package com.example.applorepediakotlin.ui
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavType
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
+import com.example.applorepediakotlin.R
+import com.example.applorepediakotlin.viewmodel.EvaluacionViewModel
 import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 
-// Rutas de Navegación
+// Definición de las rutas de pantalla
 sealed class Screen(val route: String) {
-    object Home : Screen("home_screen")
-    object ListaPersonajes : Screen("personaje_list_screen")
-    // --- NUEVA RUTA DE EVALUACIÓN ---
-    object Evaluacion : Screen("evaluacion_screen")
-    // ---------------------------------
-    object DetallePersonaje : Screen("personaje_detail_screen/{personajeId}") {
-        fun createRoute(personajeId: Int) = "personaje_detail_screen/$personajeId"
+    object Home : Screen("home")
+    object ListaPersonajes : Screen("lista_personajes")
+    // Se mantiene el argumento de ruta para el ID del personaje
+    object DetallePersonaje : Screen("detalle_personaje/{personajeId}") {
+        fun createRoute(personajeId: Int) = "detalle_personaje/$personajeId"
     }
+    // Nueva ruta para el formulario de evaluación
+    object Evaluacion : Screen("evaluacion")
 }
 
 @Composable
-fun AppNavigation(viewModel: PersonajeViewModel) {
+fun AppNavigation(
+    viewModel: PersonajeViewModel // El ViewModel principal se pasa desde MainActivity
+) {
     val navController = rememberNavController()
 
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Home.route
-    ) {
-        // --- 1. HOME SCREEN ---
+    NavHost(navController = navController, startDestination = Screen.Home.route) {
+
+        // 1. Pantalla de Inicio
         composable(Screen.Home.route) {
             HomeScreen(
                 viewModel = viewModel,
-                onNavigateToLista = {
-                    navController.navigate(Screen.ListaPersonajes.route)
-                },
-                // --- NUEVA NAVEGACIÓN A FORMULARIO ---
-                onNavigateToEvaluacion = {
-                    navController.navigate(Screen.Evaluacion.route)
-                }
+                // Navega a la lista de personajes
+                onNavigateToLista = { navController.navigate(Screen.ListaPersonajes.route) },
+                // Nueva acción: Navega a la pantalla de evaluación
+                onNavigateToEvaluacion = { navController.navigate(Screen.Evaluacion.route) }
             )
         }
 
-        // --- 2. LISTA DE PERSONAJES ---
+        // 2. Pantalla de Lista de Personajes
         composable(Screen.ListaPersonajes.route) {
+            // El título de la AppBar ahora usa stringResource
             PersonajeListScreen(
                 viewModel = viewModel,
                 onPersonajeClick = { personajeId ->
@@ -52,23 +52,24 @@ fun AppNavigation(viewModel: PersonajeViewModel) {
             )
         }
 
-        // --- 3. PANTALLA DE EVALUACIÓN (NUEVA) ---
-        composable(Screen.Evaluacion.route) {
-            // EvaluacionScreen utiliza su propio ViewModel (EvaluacionViewModel)
-            EvaluacionScreen(
+        // 3. Pantalla de Detalle de Personaje
+        composable(Screen.DetallePersonaje.route) { backStackEntry ->
+            val idString = backStackEntry.arguments?.getString("personajeId")
+            val personajeId = idString?.toIntOrNull() ?: return@composable
+
+            PersonajeDetailScreen(
+                personajeId = personajeId,
+                viewModel = viewModel,
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // --- 4. DETALLE DEL PERSONAJE ---
-        composable(
-            route = Screen.DetallePersonaje.route,
-            arguments = listOf(navArgument("personajeId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getInt("personajeId") ?: 0
-            PersonajeDetailScreen(
-                viewModel = viewModel,
-                personajeId = id,
+        // 4. Pantalla de Evaluación (Nueva)
+        composable(Screen.Evaluacion.route) {
+            // Inicializa el ViewModel específico de la evaluación
+            val evaluacionViewModel: EvaluacionViewModel = viewModel()
+            EvaluacionScreen(
+                viewModel = evaluacionViewModel,
                 onBack = { navController.popBackStack() }
             )
         }
