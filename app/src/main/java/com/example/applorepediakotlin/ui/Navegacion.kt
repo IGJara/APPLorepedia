@@ -12,6 +12,9 @@ import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 sealed class Screen(val route: String) {
     object Home : Screen("home_screen")
     object ListaPersonajes : Screen("personaje_list_screen")
+    // --- NUEVA RUTA DE EVALUACIÓN ---
+    object Evaluacion : Screen("evaluacion_screen")
+    // ---------------------------------
     object DetallePersonaje : Screen("personaje_detail_screen/{personajeId}") {
         fun createRoute(personajeId: Int) = "personaje_detail_screen/$personajeId"
     }
@@ -28,9 +31,13 @@ fun AppNavigation(viewModel: PersonajeViewModel) {
         // --- 1. HOME SCREEN ---
         composable(Screen.Home.route) {
             HomeScreen(
-                viewModel = viewModel, // <--- Pasar el ViewModel aquí
+                viewModel = viewModel,
                 onNavigateToLista = {
                     navController.navigate(Screen.ListaPersonajes.route)
+                },
+                // --- NUEVA NAVEGACIÓN A FORMULARIO ---
+                onNavigateToEvaluacion = {
+                    navController.navigate(Screen.Evaluacion.route)
                 }
             )
         }
@@ -45,7 +52,15 @@ fun AppNavigation(viewModel: PersonajeViewModel) {
             )
         }
 
-        // --- 3. DETALLE DEL PERSONAJE ---
+        // --- 3. PANTALLA DE EVALUACIÓN (NUEVA) ---
+        composable(Screen.Evaluacion.route) {
+            // EvaluacionScreen utiliza su propio ViewModel (EvaluacionViewModel)
+            EvaluacionScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        // --- 4. DETALLE DEL PERSONAJE ---
         composable(
             route = Screen.DetallePersonaje.route,
             arguments = listOf(navArgument("personajeId") { type = NavType.IntType })

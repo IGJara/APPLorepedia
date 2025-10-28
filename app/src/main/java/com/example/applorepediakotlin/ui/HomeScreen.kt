@@ -1,10 +1,10 @@
 package com.example.applorepediakotlin.ui
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Edit // Importación necesaria para el nuevo botón
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -22,16 +22,20 @@ import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-// Modificamos para aceptar el ViewModel
-fun HomeScreen(viewModel: PersonajeViewModel, onNavigateToLista: () -> Unit) {
-    val isDarkTheme by viewModel.isDarkTheme.collectAsState() // Leemos el estado del tema
+// Se actualiza la firma de la función con el nuevo destino de navegación
+fun HomeScreen(
+    viewModel: PersonajeViewModel,
+    onNavigateToLista: () -> Unit,
+    onNavigateToEvaluacion: () -> Unit // Nuevo parámetro para navegar a la evaluación
+) {
+    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Lorepedia") },
-                // --- BOTÓN DE MODO NOCTURNO ---
+                title = { Text("AppLopedia Wiki") },
                 actions = {
+                    // Botón de Modo Oscuro/Claro
                     IconButton(onClick = { viewModel.toggleDarkTheme() }) {
                         Icon(
                             imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
@@ -48,10 +52,10 @@ fun HomeScreen(viewModel: PersonajeViewModel, onNavigateToLista: () -> Unit) {
                 .padding(padding)
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center // Centra el contenido verticalmente
         ) {
             Image(
-                // Asegúrate de que este recurso exista en tu carpeta res/drawable
+                // Asegúrate de que R.drawable.ic_launcher_foreground existe en tu proyecto
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "Logo de la Wiki",
                 modifier = Modifier.size(150.dp)
@@ -60,7 +64,7 @@ fun HomeScreen(viewModel: PersonajeViewModel, onNavigateToLista: () -> Unit) {
             Spacer(Modifier.height(32.dp))
 
             Text(
-                text = "Bienvenido a Lorepedia",
+                text = "Bienvenido a AppLopedia",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -68,8 +72,9 @@ fun HomeScreen(viewModel: PersonajeViewModel, onNavigateToLista: () -> Unit) {
 
             Spacer(Modifier.height(16.dp))
 
+            // Texto descriptivo mejorado
             Text(
-                text = "Descubre a tus personajes favoritos de videojuegos con información detallada.",
+                text = "Descubre a tus personajes favoritos de videojuegos con información detallada y la opción de personalizar sus imágenes.",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -77,26 +82,40 @@ fun HomeScreen(viewModel: PersonajeViewModel, onNavigateToLista: () -> Unit) {
 
             Spacer(Modifier.height(48.dp))
 
+            // Botón principal para la lista de personajes
             Button(
                 onClick = onNavigateToLista,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.tertiary
-                )
+                    .height(50.dp)
             ) {
                 Text("Ver Lista de Personajes", style = MaterialTheme.typography.titleMedium)
             }
+
+            Spacer(Modifier.height(16.dp))
+
+            // --- NUEVO BOTÓN DE EVALUACIÓN ---
+            OutlinedButton(
+                onClick = onNavigateToEvaluacion, // Llama a la nueva función de navegación
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                Icon(Icons.Filled.Edit, contentDescription = "Evaluar App")
+                Spacer(Modifier.width(8.dp))
+                Text("Evaluar la Aplicación", style = MaterialTheme.typography.titleMedium)
+            }
+            // ---------------------------------
+
         }
     }
 }
 
-@SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     AppLopediaKotlinTheme {
-        HomeScreen(viewModel = PersonajeViewModel(), onNavigateToLista = {})
+        // Se debe actualizar el Preview con el nuevo argumento
+        HomeScreen(viewModel = PersonajeViewModel(), onNavigateToLista = {}, onNavigateToEvaluacion = {})
     }
 }
