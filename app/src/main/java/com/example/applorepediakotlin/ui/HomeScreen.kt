@@ -1,24 +1,46 @@
 package com.example.applorepediakotlin.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.applorepediakotlin.R // Asegúrate de importar R
+import com.example.applorepediakotlin.R
 import com.example.applorepediakotlin.ui.theme.AppLopediaKotlinTheme
+import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onNavigateToLista: () -> Unit) {
+// Modificamos para aceptar el ViewModel
+fun HomeScreen(viewModel: PersonajeViewModel, onNavigateToLista: () -> Unit) {
+    val isDarkTheme by viewModel.isDarkTheme.collectAsState() // Leemos el estado del tema
+
     Scaffold(
-        // Barra superior con el nombre de la App
-        topBar = { TopAppBar(title = { Text("AppLopedia Wiki") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text("Lorepedia") },
+                // --- BOTÓN DE MODO NOCTURNO ---
+                actions = {
+                    IconButton(onClick = { viewModel.toggleDarkTheme() }) {
+                        Icon(
+                            imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = if (isDarkTheme) "Cambiar a modo claro" else "Cambiar a modo oscuro"
+                        )
+                    }
+                }
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -28,9 +50,8 @@ fun HomeScreen(onNavigateToLista: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // [ELEMENTO VISUAL] Usa un recurso de imagen
-            // **Nota:** Debes tener un archivo en res/drawable llamado ic_launcher_foreground
             Image(
+                // Asegúrate de que este recurso exista en tu carpeta res/drawable
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "Logo de la Wiki",
                 modifier = Modifier.size(150.dp)
@@ -39,7 +60,7 @@ fun HomeScreen(onNavigateToLista: () -> Unit) {
             Spacer(Modifier.height(32.dp))
 
             Text(
-                text = "Bienvenido a AppLopedia",
+                text = "Bienvenido a Lorepedia",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
@@ -48,7 +69,7 @@ fun HomeScreen(onNavigateToLista: () -> Unit) {
             Spacer(Modifier.height(16.dp))
 
             Text(
-                text = "Descubre a tus personajes favoritos de videojuegos con información detallada y la opción de personalizar sus imágenes.",
+                text = "Descubre a tus personajes favoritos de videojuegos con información detallada.",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -56,7 +77,6 @@ fun HomeScreen(onNavigateToLista: () -> Unit) {
 
             Spacer(Modifier.height(48.dp))
 
-            // [BOTÓN CON FUNCIÓN] Botón que activa la navegación (uso de botones con funciones) [cite: 45]
             Button(
                 onClick = onNavigateToLista,
                 modifier = Modifier
@@ -72,11 +92,11 @@ fun HomeScreen(onNavigateToLista: () -> Unit) {
     }
 }
 
-// Previsualización de la pantalla principal
+@SuppressLint("ViewModelConstructorInComposable")
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     AppLopediaKotlinTheme {
-        HomeScreen(onNavigateToLista = {})
+        HomeScreen(viewModel = PersonajeViewModel(), onNavigateToLista = {})
     }
 }

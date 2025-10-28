@@ -10,8 +10,19 @@ import kotlinx.coroutines.flow.asStateFlow
 class PersonajeViewModel : ViewModel() {
     private val repository = PersonajeRepository()
 
+    // --- LÓGICA DEL MODO NOCTURNO ---
+    // Estado que guarda la preferencia del tema.
+    // Inicializado en TRUE para que el Modo Oscuro sea el default.
+    private val _isDarkTheme = MutableStateFlow(true)
+    val isDarkTheme: StateFlow<Boolean> = _isDarkTheme.asStateFlow()
+
+    // Función que alterna el estado del tema
+    fun toggleDarkTheme() {
+        _isDarkTheme.value = !_isDarkTheme.value
+    }
+    // ---------------------------------
+
     // Variable que contiene la lista de personajes.
-    // Esto cumple con el requisito de tener al menos una variable[cite: 41].
     private val _listaPersonajes = MutableStateFlow(repository.obtenerTodosLosPersonajes())
     val listaPersonajes: StateFlow<List<Personaje>> = _listaPersonajes.asStateFlow()
 

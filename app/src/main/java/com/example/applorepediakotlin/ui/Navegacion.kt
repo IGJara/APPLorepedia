@@ -19,15 +19,16 @@ sealed class Screen(val route: String) {
 
 @Composable
 fun AppNavigation(viewModel: PersonajeViewModel) {
-    val navController = rememberNavController() // Controlador de navegación
+    val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route // Empieza en la nueva pantalla Home
+        startDestination = Screen.Home.route
     ) {
         // --- 1. HOME SCREEN ---
         composable(Screen.Home.route) {
             HomeScreen(
+                viewModel = viewModel, // <--- Pasar el ViewModel aquí
                 onNavigateToLista = {
                     navController.navigate(Screen.ListaPersonajes.route)
                 }
