@@ -107,11 +107,4 @@ fun HomeScreen(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    AppLopediaKotlinTheme {
-        // Se usa PersonajeViewModel ficticio para el preview
-        HomeScreen(viewModel = PersonajeViewModel(), onNavigateToLista = {}, onNavigateToEvaluacion = {})
-    }
-}
+

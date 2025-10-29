@@ -10,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 import coil.compose.AsyncImage
@@ -21,14 +22,14 @@ fun PersonajeDetailScreen(
     personajeId: Int,
     onBack: () -> Unit
 ) {
-    // En MVVM, lo ideal es que el ViewModel tenga una función para obtener el personaje
+    // Obteniendo el personaje del ViewModel
     val personaje = viewModel.listaPersonajes.collectAsState().value.find { it.id == personajeId }
 
-    // Estado local simulado para la imagen (simplificando la actualización en el ViewModel)
+    // Estado local simulado para la imagen de la galería
+    // (En una app real, esta URI debería persistirse en el ViewModel y base de datos)
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
     // LANZADOR DE GALERÍA (TECNOLOGÍA DEL TELÉFONO)
-    // Esto cumple con el requisito de usar al menos una tecnología del teléfono (galería)[cite: 39].
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -56,19 +57,21 @@ fun PersonajeDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally // Centra los elementos horizontalmente
         ) {
-            // Muestra la imagen, si ha sido seleccionada
-            AsyncImage(
-                model = imageUri ?: personaje.imagenUrl,
-                contentDescription = "Imagen de ${personaje.nombre}",
-                modifier = Modifier
-                    .height(200.dp)
-                    .fillMaxWidth()
-                    .align(Alignment.CenterHorizontally)
-            )
 
-            Spacer(Modifier.height(16.dp))
+            // CARGA DE IMAGEN: Prioriza la imagen de galería, sino usa el recurso local
+            AsyncImage(
+                // Usa la URI de la galería o el ID del recurso local
+                model = imageUri ?: personaje.imagenResId,
+                contentDescription = "Imagen de ${personaje.nombre}",
+                contentScale = ContentScale.Crop, // Escala la imagen para que llene el espacio
+                modifier = Modifier
+                    .padding(vertical = 16.dp)
+                    .height(200.dp)
+                    .fillMaxWidth(0.8f) // Ocupa el 80% del ancho
+            )
 
             // Botón para abrir la galería y cambiar la imagen
             Button(
@@ -78,12 +81,12 @@ fun PersonajeDetailScreen(
                 Text("Cambiar Imagen (Usar Galería)")
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp)) // Aumentado el espacio para mejor separación
 
             Text(text = "Juego:", style = MaterialTheme.typography.titleMedium)
             Text(text = personaje.juego, style = MaterialTheme.typography.bodyLarge)
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(16.dp))
 
             Text(text = "Descripción:", style = MaterialTheme.typography.titleMedium)
             Text(text = personaje.descripcion, style = MaterialTheme.typography.bodyLarge)
