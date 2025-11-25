@@ -1,12 +1,14 @@
+// com.example.applorepediakotlin.ui/Navegacion.kt
+
 package com.example.applorepediakotlin.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.applorepediakotlin.R
+import androidx.navigation.navArgument
 import com.example.applorepediakotlin.viewmodel.EvaluacionViewModel
 import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 
@@ -14,17 +16,17 @@ import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object ListaPersonajes : Screen("lista_personajes")
-    // Se mantiene el argumento de ruta para el ID del personaje
     object DetallePersonaje : Screen("detalle_personaje/{personajeId}") {
         fun createRoute(personajeId: Int) = "detalle_personaje/$personajeId"
     }
-    // Nueva ruta para el formulario de evaluación
     object Evaluacion : Screen("evaluacion")
+    object CrearPersonaje : Screen("crear_personaje")
 }
 
 @Composable
 fun AppNavigation(
-    viewModel: PersonajeViewModel // El ViewModel principal se pasa desde MainActivity
+    // El ViewModel se recibe como argumento aquí
+    viewModel: PersonajeViewModel
 ) {
     val navController = rememberNavController()
 
@@ -33,17 +35,16 @@ fun AppNavigation(
         // 1. Pantalla de Inicio
         composable(Screen.Home.route) {
             HomeScreen(
+                // Aquí lo pasas correctamente
                 viewModel = viewModel,
-                // Navega a la lista de personajes
                 onNavigateToLista = { navController.navigate(Screen.ListaPersonajes.route) },
-                // Nueva acción: Navega a la pantalla de evaluación
-                onNavigateToEvaluacion = { navController.navigate(Screen.Evaluacion.route) }
+                onNavigateToEvaluacion = { navController.navigate(Screen.Evaluacion.route) },
+                onNavigateToCrearPersonaje = { navController.navigate(Screen.CrearPersonaje.route) }
             )
         }
 
-        // 2. Pantalla de Lista de Personajes
+        // 2. Pantalla de Listado de Personajes
         composable(Screen.ListaPersonajes.route) {
-            // El título de la AppBar ahora usa stringResource
             PersonajeListScreen(
                 viewModel = viewModel,
                 onPersonajeClick = { personajeId ->
@@ -52,25 +53,35 @@ fun AppNavigation(
             )
         }
 
-        // 3. Pantalla de Detalle de Personaje
-        composable(Screen.DetallePersonaje.route) { backStackEntry ->
-            val idString = backStackEntry.arguments?.getString("personajeId")
-            val personajeId = idString?.toIntOrNull() ?: return@composable
-
+        // 3. Pantalla de Detalle de Personaje (con argumento)
+        composable(
+            route = Screen.DetallePersonaje.route,
+            arguments = listOf(navArgument("personajeId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getInt("personajeId") ?: 0
             PersonajeDetailScreen(
-                personajeId = personajeId,
                 viewModel = viewModel,
+                personajeId = id,
                 onBack = { navController.popBackStack() }
             )
         }
 
-        // 4. Pantalla de Evaluación (Nueva)
+        // 4. Pantalla de Evaluación
         composable(Screen.Evaluacion.route) {
-            // Inicializa el ViewModel específico de la evaluación
-            val evaluacionViewModel: EvaluacionViewModel = viewModel()
+            val evaluacionViewModel = viewModel<EvaluacionViewModel>()
             EvaluacionScreen(
                 viewModel = evaluacionViewModel,
                 onBack = { navController.popBackStack() }
+            )
+        }
+
+        // 5. Pantalla de Creación de Personaje
+        composable(Screen.CrearPersonaje.route) {
+            CrearPersonajeScreen(
+                // ⭐ CORRECCIÓN CLAVE: Pasamos el objeto 'viewModel' sin paréntesis
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onPersonajeGuardado = { navController.popBackStack() }
             )
         }
     }

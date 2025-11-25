@@ -1,46 +1,61 @@
+// com.example.applorepediakotlin.repository/PersonajeRepository.kt
+
 package com.example.applorepediakotlin.repository
 
-// Importamos la clase R de nuestro proyecto para acceder a los recursos (drawables)
-import com.example.applorepediakotlin.R
-import com.example.applorepediakotlin.model.Personaje
+import android.content.Context
+import com.example.applorepediakotlin.api.ApiService
+import com.example.applorepediakotlin.api.LocalDataSource
+import com.example.applorepediakotlin.model.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.withContext
 
-class PersonajeRepository {
+class PersonajeRepository(
+    private val personajeDao: PersonajeDao,
+    private val apiService: ApiService,
+    private val applicationContext: Context
+) {
 
-    // Lista de datos simulados con los nuevos personajes y sus IDs de imagen
-    private val personajesSimulados = listOf(
-        Personaje(
-            id = 1,
-            nombre = "Gerson Boom",
-            juego = "Undertale y Deltarune",
-            descripcion = "Una tortuga anciana que vende objetos de coleccionista. Se le conocio como el 'El señor del martillo'.",
-            // ASIGNACIÓN DE IMAGEN: Usamos el ID del recurso local (R.drawable.gerson_boom)
-            imagenResId = R.drawable.gerson_boom
-        ),
-        Personaje(
-            id = 2,
-            nombre = "Dante",
-            juego = "Devil May Cry",
-            descripcion = "Cazador de demonios, hijo del legendario demonio Sparda y la humana Eva. Es un antihéroe cínico pero honorable.",
-            // ASIGNACIÓN DE IMAGEN: Usamos el ID del recurso local (R.drawable.dante_sparta)
-            imagenResId = R.drawable.dante_sparta
-        ),
-        Personaje(
-            id = 3,
-            nombre = "Spamton G. Spamton",
-            juego = "Deltarune",
-            descripcion = "Un títere defectuoso y vendedor de 'ofertas' que reside en el Ciber Mundo. ¡ES TU OPORTUNIDAD PARA SER UN PEZ GORDO!",
-            // ASIGNACIÓN DE IMAGEN: Usamos el ID del recurso local (R.drawable.spamtom_g_spamtom)
-            imagenResId = R.drawable.spamtom_g_spamtom
-        )
-    )
+    // PARTE 1: FLUJO DE DATOS (OBSERVABLE)
+    val personajes: Flow<List<Personaje>> = personajeDao.getAllPersonajes()
+        .map { entities ->
+            entities.map { it.toDomain() }
+        }
 
-    // Función para obtener todos los personajes
-    fun obtenerTodosLosPersonajes(): List<Personaje> {
-        return personajesSimulados
+    // OPERACIÓN DE CARGA INICIAL
+    suspend fun recargarPersonajes() {
+        withContext(Dispatchers.IO) {
+            try {
+                val localList = LocalDataSource.loadPersonajesFromAssets(applicationContext)
+
+                if (localList.isNotEmpty()) {
+                    personajeDao.insertAll(localList.map { it.toEntity() })
+                } else {
+                    println("Error: La lista local está vacía o hubo un error de parseo.")
+                }
+            } catch (e: Exception) {
+                println("Error al procesar datos locales: ${e.message}")
+            }
+        }
     }
 
-    // Función para obtener un personaje por ID
-    fun obtenerPersonaje(personajeId: Int): Personaje? {
-        return personajesSimulados.find { it.id == personajeId }
+    // Obtener detalle
+    fun obtenerPersonaje(id: Int): Flow<Personaje?> {
+        return personajeDao.getPersonajeById(id).map { it?.toDomain() }
+    }
+
+    // Función para crear/actualizar un personaje
+    suspend fun insertPersonaje(personaje: Personaje) {
+        withContext(Dispatchers.IO) {
+            personajeDao.insertPersonaje(personaje.toEntity())
+        }
+    }
+
+    // ⭐ NUEVA FUNCIÓN: Elimina un personaje
+    suspend fun deletePersonaje(personaje: Personaje) {
+        withContext(Dispatchers.IO) {
+            // Convierte el modelo de dominio a entidad y llama al DAO para eliminar
+            personajeDao.deletePersonaje(personaje.toEntity())
+        }
     }
 }

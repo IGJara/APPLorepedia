@@ -1,8 +1,11 @@
+// com.example.applorepediakotlin.ui/HomeScreen.kt (MODIFICADO)
+
 package com.example.applorepediakotlin.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LightMode
@@ -13,13 +16,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource // ¡IMPORTANTE: Importación para obtener el nombre de la app!
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.applorepediakotlin.R // Necesario para acceder a recursos como R.string.app_name y R.drawable.lorepedia_icon
-import com.example.applorepediakotlin.ui.theme.AppLopediaKotlinTheme
+import com.example.applorepediakotlin.R
 import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,14 +28,15 @@ import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 fun HomeScreen(
     viewModel: PersonajeViewModel,
     onNavigateToLista: () -> Unit,
-    onNavigateToEvaluacion: () -> Unit
+    onNavigateToEvaluacion: () -> Unit,
+    // ⭐ NUEVA ACCIÓN DE NAVEGACIÓN
+    onNavigateToCrearPersonaje: () -> Unit
 ) {
     val isDarkTheme by viewModel.isDarkTheme.collectAsState()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                // Carga el nombre de la aplicación de strings.xml
                 title = { Text(stringResource(R.string.app_name)) },
                 actions = {
                     IconButton(onClick = { viewModel.toggleDarkTheme() }) {
@@ -55,7 +57,6 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Carga tu icono principal usando el nombre del archivo PNG que añadiste a 'drawable'
             Image(
                 painter = painterResource(id = R.drawable.lorepedia_icon),
                 contentDescription = "Logo de Lorepedia",
@@ -82,7 +83,21 @@ fun HomeScreen(
 
             Spacer(Modifier.height(48.dp))
 
+            // ⭐ NUEVO BOTÓN PARA CREAR
             Button(
+                onClick = onNavigateToCrearPersonaje,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = "Crear Personaje")
+                Spacer(Modifier.width(8.dp))
+                Text("Crear Nuevo Personaje", style = MaterialTheme.typography.titleMedium)
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            OutlinedButton(
                 onClick = onNavigateToLista,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -106,5 +121,3 @@ fun HomeScreen(
         }
     }
 }
-
-
