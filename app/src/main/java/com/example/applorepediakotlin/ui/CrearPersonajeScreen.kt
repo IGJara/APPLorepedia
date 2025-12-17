@@ -1,27 +1,28 @@
-// com.example.applorepediakotlin.ui/CrearPersonajeScreen.kt (MODIFICADO)
-
 package com.example.applorepediakotlin.ui
 
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import android.content.Intent
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import coil.compose.rememberAsyncImagePainter
 import com.example.applorepediakotlin.model.Personaje
 import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,48 +32,54 @@ fun CrearPersonajeScreen(
     onPersonajeGuardado: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     var nombre by remember { mutableStateOf("") }
     var juego by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
+    var musicaUrl by remember { mutableStateOf("") }
     var imagenUri by remember { mutableStateOf<Uri?>(null) }
+    var isSaving by remember { mutableStateOf(false) }
 
-    var showError by remember { mutableStateOf(false) }
-
+    // Launcher para Imagen
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        if (uri != null) {
+        uri?.let {
+            try {
+                context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                imagenUri = it
+            } catch (e: Exception) { imagenUri = it }
+        }
+    }
+
+    // Launcher para Música (Corregido con OpenDocument)
+    val musicLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
             try {
                 context.contentResolver.takePersistableUriPermission(
-                    uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    it, Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-                imagenUri = uri
-            } catch (e: Exception) {
-                println("Error al persistir el permiso de URI: ${e.message}")
-                imagenUri = uri
-            }
+            } catch (e: Exception) { e.printStackTrace() }
+            musicaUrl = it.toString()
         }
     }
 
     val onSave: () -> Unit = {
-        // ⭐ CAMBIO CLAVE: La imagen ahora es opcional en la validación
-        if (nombre.isBlank() || juego.isBlank() || descripcion.isBlank()) {
-            showError = true
-        } else {
-            showError = false
+        isSaving = true
+        val nuevoPersonaje = Personaje(
+            id = 0,
+            nombre = nombre,
+            juego = juego,
+            descripcion = descripcion,
+            musicaUrl = musicaUrl.ifBlank { null },
+            imagenUrl = imagenUri?.toString(),
+            imagenResId = null // Resolución del error inicial
+        )
 
-            val nuevoPersonaje = Personaje(
-                id = 0,
-                nombre = nombre,
-                juego = juego,
-                descripcion = descripcion,
-                // Si imagenUri es null, guardamos null.
-                imagenUrl = imagenUri?.toString(),
-                imagenResId = null
-            )
-
+        scope.launch {
             viewModel.savePersonaje(nuevoPersonaje)
             onPersonajeGuardado()
         }
@@ -84,12 +91,12 @@ fun CrearPersonajeScreen(
                 title = { Text("Crear Nuevo Personaje") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Atrás")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, null)
                     }
                 },
                 actions = {
-                    IconButton(onClick = onSave) {
-                        Icon(Icons.Filled.Save, contentDescription = "Guardar Personaje")
+                    IconButton(onClick = onSave, enabled = nombre.isNotBlank() && !isSaving) {
+                        Icon(Icons.Filled.Save, null)
                     }
                 }
             )
@@ -99,60 +106,45 @@ fun CrearPersonajeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = juego, onValueChange = { juego = it }, label = { Text("Juego") }, modifier = Modifier.fillMaxWidth())
 
-            OutlinedTextField(
-                value = nombre,
-                onValueChange = { nombre = it },
-                label = { Text("Nombre del Personaje") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                isError = showError && nombre.isBlank()
-            )
+            Spacer(Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = juego,
-                onValueChange = { juego = it },
-                label = { Text("Juego/Franquicia") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-                isError = showError && juego.isBlank()
-            )
+            // Botón de Música
+            Button(
+                onClick = { musicLauncher.launch(arrayOf("audio/*")) },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+            ) {
+                Icon(Icons.Filled.MusicNote, null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (musicaUrl.isBlank()) "Seleccionar Música" else "Música Seleccionada ✅")
+            }
 
             OutlinedTextField(
                 value = descripcion,
                 onValueChange = { descripcion = it },
                 label = { Text("Descripción") },
-                modifier = Modifier.fillMaxWidth().height(150.dp).padding(bottom = 16.dp),
-                singleLine = false,
-                isError = showError && descripcion.isBlank()
+                modifier = Modifier.fillMaxWidth().height(150.dp)
             )
 
-            Button(
-                onClick = { galleryLauncher.launch("image/*") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Seleccionar Imagen (Opcional)") // Texto actualizado
-            }
-
             Spacer(Modifier.height(16.dp))
+
+            Button(onClick = { galleryLauncher.launch("image/*") }, modifier = Modifier.fillMaxWidth()) {
+                Text("Seleccionar Imagen")
+            }
 
             if (imagenUri != null) {
                 Image(
                     painter = rememberAsyncImagePainter(imagenUri),
-                    contentDescription = "Previsualización de imagen",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(120.dp)
-                        .padding(8.dp)
-                )
-            }
-
-            if (showError) {
-                Text(
-                    "Todos los campos de texto son obligatorios.", // Mensaje actualizado
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 8.dp)
+                    contentDescription = null,
+                    modifier = Modifier.size(150.dp).padding(top = 8.dp),
+                    contentScale = ContentScale.Crop
                 )
             }
         }

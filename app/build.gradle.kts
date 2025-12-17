@@ -93,4 +93,11 @@ dependencies {
     ksp("androidx.room:room-compiler:$roomVersion")
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
+
+    // DataStore Preferences (Para persistencia de Login/Token)
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+
+    // Kotlin Coroutines (Necesario para DataStore Flow)
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 }

@@ -1,84 +1,94 @@
-// com.example.applorepediakotlin.viewmodel/PersonajeViewModel.kt
-
 package com.example.applorepediakotlin.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.applorepediakotlin.model.Personaje
+import com.example.applorepediakotlin.model.toPersonajeDto // ⭐ NUEVO IMPORT
 import com.example.applorepediakotlin.repository.PersonajeRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class PersonajeViewModel(
     private val repository: PersonajeRepository
 ) : ViewModel() {
 
-    private val _isLoading = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
+    // ... (Lógica de tema y carga se mantiene)
     private val _isDarkTheme = MutableStateFlow(true)
     val isDarkTheme: StateFlow<Boolean> = _isDarkTheme.asStateFlow()
+    fun toggleDarkTheme() { _isDarkTheme.value = !_isDarkTheme.value }
 
-    fun toggleDarkTheme() {
-        _isDarkTheme.value = !_isDarkTheme.value
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _searchText = MutableStateFlow("")
+    val searchText: StateFlow<String> = _searchText.asStateFlow()
+
+    fun onSearchTextChange(text: String) {
+        _searchText.value = text
     }
 
-    // Observamos directamente el Flow de Room (listaPersonajes)
-    val listaPersonajes: StateFlow<List<Personaje>> = repository.personajes
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
-
-    init {
-        recargarDatos()
-    }
+    val listaPersonajes: StateFlow<List<Personaje>> = combine(
+        repository.personajes,
+        _searchText
+    ) { personajes, text ->
+        if (text.isBlank()) {
+            personajes
+        } else {
+            personajes.filter {
+                it.nombre.contains(text, ignoreCase = true) ||
+                        it.juego.contains(text, ignoreCase = true)
+            }
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     fun recargarDatos() {
         viewModelScope.launch {
             _isLoading.value = true
+            repository.recargarPersonajes() // Esto debe llamar a getPersonajes en el Repositorio
+            _isLoading.value = false
+        }
+    }
+
+    // ⭐ FUNCIÓN CORREGIDA: Ahora maneja la creación O la actualización vía API
+    fun savePersonaje(personaje: Personaje) {
+        viewModelScope.launch {
             try {
-                repository.recargarPersonajes()
+                val dto = personaje.toPersonajeDto()
+
+                if (personaje.id == 0 || personaje.id == null) {
+                    // Si ID es 0 o nulo, es una CREACIÓN (POST)
+                    repository.createPersonaje(dto)
+                } else {
+                    // Si ID existe, es una ACTUALIZACIÓN (PUT/PATCH)
+                    repository.updatePersonaje(dto)
+                }
+
+                // Después de la operación, recargamos los datos para actualizar la UI
+                // repository.recargarPersonajes() // Si recargarPersonajes() lee de la API
+                // O si PersonajeListScreen ya escucha el Flow, solo haz:
+                // repository.insertPersonaje(personaje) // Si insertPersonaje actualiza la BD local
+
             } catch (e: Exception) {
-                println("Error de carga de personajes: ${e.message}")
-            } finally {
-                _isLoading.value = false
+                println("ViewModel Error al guardar/actualizar: ${e.message}")
+                // Manejar error de UI aquí
             }
         }
     }
 
-    // Función para crear un personaje
-    fun savePersonaje(personaje: Personaje) {
-        viewModelScope.launch {
-            repository.insertPersonaje(personaje)
-        }
-    }
+    // ⭐ FUNCIÓN ELIMINADA: La función insertPersonaje del repositorio se llama internamente.
+    // fun insertPersonaje(personaje: Personaje) { ... }
+    // La dejaremos si se requiere guardar en caché local DESPUÉS de la API.
 
-    // Función para actualizar un personaje existente
-    fun updatePersonaje(personaje: Personaje) {
-        viewModelScope.launch {
-            repository.insertPersonaje(personaje)
-        }
-    }
-
-    // ⭐ NUEVA FUNCIÓN: Elimina un personaje
     fun deletePersonaje(personaje: Personaje) {
         viewModelScope.launch {
-            repository.deletePersonaje(personaje)
+            // Asumiendo que el repositorio tiene un deletePersonaje(id: Int) que llama a la API
+            repository.deletePersonaje(personaje.id)
         }
     }
 
-    // Devolvemos el Flow que obtiene el detalle
-    fun getPersonajeDetalleFlow(id: Int): StateFlow<Personaje?> = repository.obtenerPersonaje(id).stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = null
-    )
-
-    fun getPersonajeDetalle(id: Int) = getPersonajeDetalleFlow(id)
+    fun getPersonajeDetalle(id: Int) = repository.getPersonajeDetalle(id)
 }

@@ -1,50 +1,55 @@
-// com.example.applorepediakotlin.ui/HomeScreen.kt (MODIFICADO)
-
 package com.example.applorepediakotlin.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Logout // Necesario para el nuevo botón
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.WbSunny
+import androidx.compose.material.icons.filled.List
+import androidx.compose.runtime.collectAsState
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.applorepediakotlin.R
+import com.example.applorepediakotlin.viewmodel.AuthViewModel
 import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    viewModel: PersonajeViewModel,
+    personajeViewModel: PersonajeViewModel,
+    authViewModel: AuthViewModel,
+
     onNavigateToLista: () -> Unit,
-    onNavigateToEvaluacion: () -> Unit,
-    // ⭐ NUEVA ACCIÓN DE NAVEGACIÓN
-    onNavigateToCrearPersonaje: () -> Unit
+    onLogout: () -> Unit
 ) {
-    val isDarkTheme by viewModel.isDarkTheme.collectAsState()
+    val isDarkTheme by personajeViewModel.isDarkTheme.collectAsState()
+    val userName by authViewModel.currentUserName.collectAsState(initial = "Invitado")
+
+    val welcomeMessage = if (userName == "Invitado" || userName.isNullOrEmpty()) {
+        "Bienvenido a Lorepedia."
+    } else {
+        "Bienvenido, $userName."
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
+                title = { Text("Lorepedia - Inicio") },
                 actions = {
-                    IconButton(onClick = { viewModel.toggleDarkTheme() }) {
+                    // Botón de Tema (Mantenido)
+                    IconButton(onClick = { personajeViewModel.toggleDarkTheme() }) {
                         Icon(
-                            imageVector = if (isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
-                            contentDescription = if (isDarkTheme) "Cambiar a modo claro" else "Cambiar a modo oscuro"
+                            imageVector = if (isDarkTheme) Icons.Filled.WbSunny else Icons.Filled.DarkMode,
+                            contentDescription = "Cambiar Tema"
                         )
                     }
+                    // ⭐ SE HA ELIMINADO EL BOTÓN DE CERRAR SESIÓN DE AQUÍ
                 }
             )
         }
@@ -57,66 +62,55 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Logo Decorativo
             Image(
-                painter = painterResource(id = R.drawable.lorepedia_icon),
+                painter = painterResource(id = R.drawable.lorepedia_logo_text),
                 contentDescription = "Logo de Lorepedia",
-                modifier = Modifier.size(150.dp)
+                modifier = Modifier.size(200.dp)
             )
 
             Spacer(Modifier.height(32.dp))
 
+            // Bienvenida Personalizada
             Text(
-                text = "Bienvenido a Lorepedia",
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary
+                text = welcomeMessage,
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            Spacer(Modifier.height(16.dp))
-
             Text(
-                text = "Descubre a tus personajes favoritos de videojuegos con información detallada y la opción de personalizar sus imágenes.",
+                text = "Bienvenido a la Wiki de Personajes de videojuegos mas grande del mundo, ahora selecciona una opcion",
                 style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier.padding(bottom = 32.dp)
             )
 
-            Spacer(Modifier.height(48.dp))
-
-            // ⭐ NUEVO BOTÓN PARA CREAR
+            // --- BOTÓN 1: Lista de Personajes ---
             Button(
-                onClick = onNavigateToCrearPersonaje,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = "Crear Personaje")
-                Spacer(Modifier.width(8.dp))
-                Text("Crear Nuevo Personaje", style = MaterialTheme.typography.titleMedium)
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            OutlinedButton(
                 onClick = onNavigateToLista,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
+                modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
-                Text("Ver Lista de Personajes", style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.List, contentDescription = null, modifier = Modifier.size(24.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Ver Lista de Personajes")
+                }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedButton(
-                onClick = onNavigateToEvaluacion,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
+            // ⭐ BOTÓN 2: Cerrar Sesión (Nuevo Botón)
+            OutlinedButton( // Usamos OutlinedButton para distinguirlo de la acción principal
+                onClick = {
+                    authViewModel.logout()
+                    onLogout()
+                },
+                modifier = Modifier.fillMaxWidth().height(50.dp)
             ) {
-                Icon(Icons.Filled.Edit, contentDescription = "Evaluar App")
-                Spacer(Modifier.width(8.dp))
-                Text("Evaluar la Aplicación", style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Logout, contentDescription = null, modifier = Modifier.size(24.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Cerrar Sesión")
+                }
             }
         }
     }

@@ -3,7 +3,7 @@ package com.example.applorepediakotlin.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.Icons // ⭐ AÑADIDO
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.*
@@ -12,14 +12,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.applorepediakotlin.ui.theme.AppLopediaKotlinTheme
+// ⭐ IMPORTACIÓN NECESARIA PARA LA CORRECCIÓN DEL TEMA
+import androidx.compose.foundation.isSystemInDarkTheme
+import com.example.applorepediakotlin.ui.theme.AppLorepediaKotlinTheme
 import com.example.applorepediakotlin.viewmodel.EvaluacionViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material.icons.automirrored.filled.ArrowBack // ⭐ AÑADIDO (Para el icono de navegación)
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EvaluacionScreen(
-    viewModel: EvaluacionViewModel = viewModel(), // Usamos el VM inyectado por Compose
+    viewModel: EvaluacionViewModel = viewModel(),
     onBack: () -> Unit
 ) {
     Scaffold(
@@ -27,8 +31,9 @@ fun EvaluacionScreen(
             TopAppBar(
                 title = { Text("Formulario de Evaluación") },
                 navigationIcon = {
+                    // USO DEL ICONO NO DEPRECIADO
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
@@ -70,7 +75,7 @@ fun EvaluacionScreen(
                 value = viewModel.calificacionDiseno,
                 onValueChange = viewModel::updateDiseno,
                 valueRange = 0f..10f,
-                steps = 9, // Permite valores enteros de 0 a 10
+                steps = 9,
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -120,7 +125,6 @@ fun EvaluacionScreen(
                 Button(
                     onClick = viewModel::submitFormulario,
                     modifier = Modifier.fillMaxWidth().height(50.dp),
-                    // Deshabilitar el botón si no se ha escrito al menos un nombre o comentario
                     enabled = viewModel.nombreEvaluador.isNotBlank() || viewModel.comentario.isNotBlank(),
                     contentPadding = PaddingValues(16.dp)
                 ) {
@@ -137,9 +141,8 @@ fun EvaluacionScreen(
 
 @Preview(showBackground = true)
 @Composable
-fun EvaluacionScreenPreview() {
-    AppLopediaKotlinTheme {
-        // En el preview usamos una instancia nueva
+fun AppLorepediaKotlinPreview() {
+    AppLorepediaKotlinTheme(darkTheme = isSystemInDarkTheme()) {
         EvaluacionScreen(onBack = {})
     }
 }

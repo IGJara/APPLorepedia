@@ -5,33 +5,49 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.applorepediakotlin.ui.AppNavigation
-import com.example.applorepediakotlin.ui.theme.AppLopediaKotlinTheme
+import androidx.activity.viewModels
+import com.example.applorepediakotlin.ui.NavegacionApp
+import com.example.applorepediakotlin.ui.theme.AppLorepediaKotlinTheme
+import com.example.applorepediakotlin.viewmodel.AuthViewModel
 import com.example.applorepediakotlin.viewmodel.PersonajeViewModel
-import com.example.applorepediakotlin.viewmodel.PersonajeViewModelFactory
+import com.example.applorepediakotlin.viewmodel.ViewModelFactory
 
 class MainActivity : ComponentActivity() {
+
+    private val applicationInstance by lazy { application as AppLorepediaApplication }
+
+    // Utilizando el nombre de la clase 'ViewModelFactory' para obtener ViewModels
+    // ⭐ CORRECCIÓN CRÍTICA: Usamos los getters públicos
+    private val personajeViewModel: PersonajeViewModel by viewModels {
+        ViewModelFactory(
+            personajeRepository = applicationInstance.getPersonajeRepository(), // ⭐ USAR GETTER
+            authRepository = applicationInstance.getAuthRepository() // ⭐ USAR GETTER
+        )
+    }
+
+    private val authViewModel: AuthViewModel by viewModels {
+        ViewModelFactory(
+            // ⭐ USAR GETTER
+            personajeRepository = applicationInstance.getPersonajeRepository(),
+            // ⭐ USAR GETTER
+            authRepository = applicationInstance.getAuthRepository()
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            // ⭐ 1. LEER EL ESTADO DEL TEMA DESDE EL VIEWMODEL (Asumiendo que PersonajeViewModel lo maneja)
+            val isDarkTheme by personajeViewModel.isDarkTheme.collectAsState()
 
-            // 1. Obtener la instancia de la aplicación
-            val application = application as AppLorepediaApplication
-
-            // 2. Crear la Factoría (Factory) con el Repositorio
-            val factory = PersonajeViewModelFactory(application.repository)
-
-            // 3. Crear el ViewModel usando la Factoría
-            val viewModel: PersonajeViewModel = viewModel(factory = factory)
-
-            // 4. Leer el estado del tema
-            val isDarkTheme by viewModel.isDarkTheme.collectAsState()
-
-            // 5. Aplicar el tema e iniciar la navegación
-            AppLopediaKotlinTheme(darkTheme = isDarkTheme) {
-                AppNavigation(viewModel = viewModel)
+            // ⭐ 2. PASAR EL ESTADO DEL TEMA AL COMPOSABLE DEL TEMA
+            AppLorepediaKotlinTheme(
+                darkTheme = isDarkTheme
+            ) {
+                NavegacionApp(
+                    personajeViewModel = personajeViewModel,
+                    authViewModel = authViewModel
+                )
             }
         }
     }
